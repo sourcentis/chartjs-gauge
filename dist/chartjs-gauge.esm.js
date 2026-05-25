@@ -1,5 +1,5 @@
 import { DoughnutController, ArcElement, Chart } from 'chart.js';
-import { toPercentage, toDimension, TAU, toRadians, addRoundedRectPath, _angleBetween, HALF_PI, PI } from 'chart.js/helpers';
+import { toPercentage, toDimension, TAU, _angleBetween, HALF_PI, PI } from 'chart.js/helpers';
 
 function getRatioAndOffset(rotation, circumference, cutout, needleOpts) {
     let ratioX = 1;
@@ -201,63 +201,50 @@ class GaugeController extends DoughnutController {
         const valueLabelOpts = this.options.valueLabel;
         if (!valueLabelOpts.display) return;
 
-        const { ctx, chartArea } = this.chart;
+        const { ctx } = this.chart;
         const dataset = this.getDataset();
         const value = dataset.value;
 
-        const fmt =
-            typeof valueLabelOpts.formatter === "function"
-                ? valueLabelOpts.formatter
-                : (v) => String(v);
+        // Chart.js proxy treats all functions as "scriptable" and calls them with
+        // its internal context instead of returning the function itself.
+        // Read the formatter directly from the raw config to bypass this.
+        const rawFormatter = this.chart.config._config?.options?.valueLabel?.formatter;
+        const fmt = typeof rawFormatter === "function" ? rawFormatter : (v) => String(v);
         const valueText = String(fmt(value));
+        if (!valueText) return;
 
-        const fontSizePx = Number(valueLabelOpts.fontSize) || 12;
-        const {
-            color,
-            backgroundColor,
-            borderRadius,
-            padding,
-            bottomMarginPercentage,
-        } = valueLabelOpts;
-
-        const paddingTop = padding?.top ?? 5;
-        const paddingRight = padding?.right ?? 10;
-        const paddingBottom = padding?.bottom ?? 5;
-        const paddingLeft = padding?.left ?? 10;
-
-        const width = chartArea.right - chartArea.left;
-        const bottomMargin = ((bottomMarginPercentage ?? 5) / 100) * width;
+        // Read each option individually with || fallback to avoid proxy resolution issues
+        const fontSizePx  = Number(valueLabelOpts.fontSize) || 12;
+        const bgColor      = valueLabelOpts.backgroundColor  || "rgba(0, 0, 0, 0.85)";
+        const txtColor     = valueLabelOpts.color            || "rgba(255, 255, 255, 1)";
+        const radius       = Number(valueLabelOpts.borderRadius) || 5;
+        const paddingTop    = valueLabelOpts.padding?.top    ?? 6;
+        const paddingRight  = valueLabelOpts.padding?.right  ?? 14;
+        const paddingBottom = valueLabelOpts.padding?.bottom ?? 6;
+        const paddingLeft   = valueLabelOpts.padding?.left   ?? 14;
 
         ctx.save();
+        ctx.font = `${fontSizePx}px sans-serif`;
         ctx.textBaseline = "middle";
         ctx.textAlign = "center";
-        ctx.font = `${fontSizePx}px sans-serif`;
 
         const textWidth = ctx.measureText(valueText).width;
-        const textHeight = fontSizePx;
-
-        const boxWidth = paddingLeft + textWidth + paddingRight;
-        const boxHeight = paddingTop + textHeight + paddingBottom;
+        const boxWidth  = paddingLeft + textWidth + paddingRight;
+        const boxHeight = paddingTop + fontSizePx + paddingBottom;
 
         const { dx, dy } = this.getTranslation(this.chart);
-        const chartRotation = toRadians(this.chart.options.rotation ?? -90) % (Math.PI * 2);
-        const labelX = dx + bottomMargin * Math.cos(chartRotation + Math.PI / 2);
-        const labelY = dy + bottomMargin * Math.sin(chartRotation + Math.PI / 2);
+        ctx.translate(dx, dy);
 
-        ctx.translate(labelX, labelY);
-
+        ctx.fillStyle = bgColor;
         ctx.beginPath();
-        addRoundedRectPath(ctx, {
-            x: -boxWidth / 2,
-            y: -boxHeight / 2,
-            w: boxWidth,
-            h: boxHeight,
-            radius: borderRadius ?? 5,
-        });
-        ctx.fillStyle = backgroundColor;
+        if (ctx.roundRect) {
+            ctx.roundRect(-boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight, radius);
+        } else {
+            ctx.rect(-boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight);
+        }
         ctx.fill();
 
-        ctx.fillStyle = color;
+        ctx.fillStyle = txtColor;
         ctx.fillText(valueText, 0, 0);
 
         ctx.restore();
@@ -285,19 +272,23 @@ GaugeController.overrides = {
         formatter: null,
         fontSize: 12,
         color: "rgba(255, 255, 255, 1)",
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
         borderRadius: 5,
         padding: {
-            top: 5,
-            right: 10,
-            bottom: 5,
-            left: 10,
+            top: 6,
+            right: 14,
+            bottom: 6,
+            left: 14,
         },
-        bottomMarginPercentage: 5,
     },
     cutout: "50%",
     rotation: -90,
     circumference: 180,
+    layout: {
+        padding: {
+            bottom: 10,
+        },
+    },
     plugins: {
         legend: { display: false },
         tooltip: { enabled: false },

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chartjs-gauge — Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script src="dist/chartjs-gauge.umd.js?v=6"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f7f8fa;
+            color: #1a202c;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        header {
+            text-align: center;
+            padding: 56px 24px 40px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        header h1 {
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #3182ce, #805ad5, #dd6b20);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        header p {
+            margin-top: 12px;
+            color: #718096;
+            font-size: 1rem;
+        }
+        header .badges { margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        header .badge {
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: #edf2f7;
+            color: #4a5568;
+        }
+
+        /* ── Grid ── */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 24px 64px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 28px;
+        }
+
+        /* Wide card spans full row */
+        .card.wide { grid-column: 1 / -1; }
+
+        /* ── Cards ── */
+        .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 28px 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .card:hover { border-color: #cbd5e0; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+        .card-subtitle {
+            font-size: 0.78rem;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        /* ── Slider ── */
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .slider-row label { font-size: 0.82rem; color: #718096; white-space: nowrap; }
+        input[type=range] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #3182ce;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 0 1px #cbd5e0;
+        }
+        .slider-val {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #3182ce;
+            min-width: 36px;
+            text-align: right;
+        }
+
+        /* ── Legend ── */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: #718096;
+        }
+        .legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Wide card inner layout ── */
+        .wide-inner {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px 32px;
+            align-items: start;
+        }
+        .wide-inner .chart-wrap { max-width: 260px; }
+
+        /* ── Code snippet ── */
+        pre {
+            background: #f7f8fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 0.72rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            color: #4a5568;
+        }
+        .kw { color: #805ad5; }
+        .str { color: #276749; }
+        .num { color: #c05621; }
+        .cm { color: #a0aec0; font-style: italic; }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 24px;
+            border-top: 1px solid #e2e8f0;
+            color: #a0aec0;
+            font-size: 0.8rem;
+        }
+        footer a { color: #3182ce; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>chartjs-gauge</h1>
+    <p>Chart.js plugin — Animated gauge chart with needle and value label</p>
+    <div class="badges">
+        <span class="badge">Chart.js v4</span>
+        <span class="badge">MIT</span>
+        <span class="badge">UMD · ESM</span>
+        <span class="badge">Laravel / npm</span>
+    </div>
+</header>
+
+<main>
+
+    <!-- ① Interactive gauge -->
+    <div class="card">
+        <div>
+            <div class="card-title">Interactive gauge</div>
+            <div class="card-subtitle">Move the slider to animate the needle</div>
+        </div>
+        <div class="chart-wrap"><canvas id="g-interactive"></canvas></div>
+        <div class="slider-row">
+            <label>Value</label>
+            <input type="range" id="slider" min="0" max="100" value="65">
+            <span class="slider-val" id="slider-display">65</span>
+        </div>
+        <div class="legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#E15759"></span>Low (0–33)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#F28E2B"></span>Medium (33–66)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#59A14F"></span>Good (66–100)</span>
+        </div>
+    </div>
+
+    <!-- ② Maturity score -->
+    <div class="card">
+        <div>
+            <div class="card-title">Maturity score</div>
+            <div class="card-subtitle">Custom formatter · 4 zones</div>
+        </div>
+        <div class="chart-wrap"><canvas id="g-maturity"></canvas></div>
+        <div class="legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#d32f2f"></span>Critical</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f57c00"></span>At risk</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#fbc02d"></span>Acceptable</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#388e3c"></span>Mastered</span>
+        </div>
+    </div>
+
+    <!-- ③ Negative values (minValue) -->
+    <div class="card">
+        <div>
+            <div class="card-title">Temperature — negative minValue</div>
+            <div class="card-subtitle">From −30 °C to +50 °C</div>
+        </div>
+        <div class="chart-wrap"><canvas id="g-temp"></canvas></div>
+        <div class="legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#4e79a7"></span>Frost (&lt; −10)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#76b7b2"></span>Cold</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#59a14f"></span>Mild</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f28e2b"></span>Warm</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#e15759"></span>Heat wave</span>
+        </div>
+    </div>
+
+    <!-- ④ 360° gauge -->
+    <div class="card">
+        <div>
+            <div class="card-title">360° gauge</div>
+            <div class="card-subtitle">circumference: 360 · cutout: 70%</div>
+        </div>
+        <div class="chart-wrap"><canvas id="g-360"></canvas></div>
+        <div class="legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#4e79a7"></span>0–90°</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f28e2b"></span>90–180°</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#e15759"></span>180–270°</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#76b7b2"></span>270–360°</span>
+        </div>
+    </div>
+
+    <!-- ⑤ No label -->
+    <div class="card">
+        <div>
+            <div class="card-title">Hidden label · Thin needle</div>
+            <div class="card-subtitle">valueLabel: false · widthPercentage: 1.5</div>
+        </div>
+        <div class="chart-wrap"><canvas id="g-nolabel"></canvas></div>
+    </div>
+
+    <!-- ⑥ Wide cutout -->
+    <div class="card">
+        <div>
+            <div class="card-title">Thin ring · cutout 80%</div>
+            <div class="card-subtitle">Minimalist style</div>
+        </div>
+        <div class="chart-wrap"><canvas id="g-thin"></canvas></div>
+    </div>
+
+    <!-- ⑦ KPI comparison — wide card -->
+    <div class="card wide">
+        <div>
+            <div class="card-title">KPI comparison — multiple indicators</div>
+            <div class="card-subtitle">Same configuration, different values</div>
+        </div>
+        <div class="wide-inner">
+            <div>
+                <div class="chart-wrap"><canvas id="g-kpi1"></canvas></div>
+                <p style="text-align:center;margin-top:8px;font-size:.82rem;color:#718096">Customer satisfaction</p>
+            </div>
+            <div>
+                <div class="chart-wrap"><canvas id="g-kpi2"></canvas></div>
+                <p style="text-align:center;margin-top:8px;font-size:.82rem;color:#718096">Conversion rate</p>
+            </div>
+            <div>
+                <div class="chart-wrap"><canvas id="g-kpi3"></canvas></div>
+                <p style="text-align:center;margin-top:8px;font-size:.82rem;color:#718096">Server performance</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⑧ Code snippet -->
+    <div class="card wide">
+        <div class="card-title">Quick start (CDN / UMD)</div>
+        <pre><span class="cm">&lt;!-- 1. Load Chart.js then the plugin --&gt;</span>
+&lt;<span class="kw">script</span> src=<span class="str">"https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"</span>&gt;&lt;/<span class="kw">script</span>&gt;
+&lt;<span class="kw">script</span> src=<span class="str">"/vendor/chartjs-gauge/chartjs-gauge.min.js"</span>&gt;&lt;/<span class="kw">script</span>&gt;
+
+&lt;<span class="kw">canvas</span> id=<span class="str">"myGauge"</span>&gt;&lt;/<span class="kw">canvas</span>&gt;
+&lt;<span class="kw">script</span>&gt;
+  <span class="kw">new</span> Chart(document.getElementById(<span class="str">"myGauge"</span>), {
+    type: <span class="str">"gauge"</span>,
+    data: {
+      datasets: [{
+        value: <span class="num">65</span>,                          <span class="cm">// needle position</span>
+        data:  [<span class="num">33</span>, <span class="num">66</span>, <span class="num">100</span>],               <span class="cm">// segment boundaries</span>
+        backgroundColor: [<span class="str">"#E15759"</span>, <span class="str">"#F28E2B"</span>, <span class="str">"#59A14F"</span>],
+      }],
+    },
+    options: {
+      needle: {
+        radiusPercentage:  <span class="num">2</span>,
+        widthPercentage:   <span class="num">3.2</span>,
+        lengthPercentage:  <span class="num">80</span>,
+        color: <span class="str">"rgba(0,0,0,1)"</span>,
+      },
+      valueLabel: {
+        display:    <span class="kw">true</span>,
+        formatter:  (v) =&gt; <span class="str">`${v}%`</span>,
+        color:      <span class="str">"#fff"</span>,
+        backgroundColor: <span class="str">"rgba(0,0,0,0.8)"</span>,
+      },
+    },
+  });
+&lt;/<span class="kw">script</span>&gt;</pre>
+    </div>
+
+</main>
+
+<footer>
+    <a href="https://github.com/sourcentis/chartjs-gauge">@sourcentis/chartjs-gauge</a>
+    &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; Powered by <a href="https://www.chartjs.org/">Chart.js v4</a>
+</footer>
+
+<script>
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function makeGauge(id, value, data, colors, options = {}) {
+    return new Chart(document.getElementById(id), {
+        type: "gauge",
+        data: { datasets: [{ value, data, backgroundColor: colors }] },
+        options: {
+            responsive: true,
+            needle: {
+                radiusPercentage: 2,
+                widthPercentage: 3.2,
+                lengthPercentage: 80,
+                color: "rgba(30,32,48,0.85)",
+                ...options.needle,
+            },
+            valueLabel: {
+                display: true,
+                color: "#ffffff",
+                borderRadius: 6,
+                padding: { top: 5, right: 10, bottom: 5, left: 10 },
+                ...options.valueLabel,
+            },
+            animation: { duration: 800, easing: "easeInOutQuart" },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            ...options.chart,
+        },
+    });
+}
+
+// ── ① Interactive gauge ──────────────────────────────────────────────────────
+
+const interactiveChart = makeGauge(
+    "g-interactive", 65,
+    [33, 66, 100],
+    ["#E15759", "#F28E2B", "#59A14F"],
+    { valueLabel: { formatter: (v) => typeof v === 'number' ? `${v} %` : '' } }
+);
+
+const slider = document.getElementById("slider");
+const sliderDisplay = document.getElementById("slider-display");
+
+slider.addEventListener("input", () => {
+    const val = Number(slider.value);
+    sliderDisplay.textContent = val;
+    interactiveChart.data.datasets[0].value = val;
+    interactiveChart.update();
+});
+
+// ── ② Maturity score ─────────────────────────────────────────────────────────
+
+makeGauge(
+    "g-maturity", 72,
+    [25, 50, 75, 100],
+    ["#d32f2f", "#f57c00", "#fbc02d", "#388e3c"],
+    {
+        valueLabel: {
+            formatter: (v) => typeof v !== 'number' ? '' : v >= 75 ? "Mastered" : v >= 50 ? "Acceptable" : v >= 25 ? "At risk" : "Critical",
+            fontSize: 13,
+            color: "#ffffff",
+        },
+    }
+);
+
+// ── ③ Temperature (negative minValue) ───────────────────────────────────────
+
+new Chart(document.getElementById("g-temp"), {
+    type: "gauge",
+    data: {
+        datasets: [{
+            value: 22,
+            minValue: -30,
+            data: [-10, 0, 15, 35, 50],
+            backgroundColor: ["#4e79a7", "#76b7b2", "#59a14f", "#f28e2b", "#e15759"],
+        }],
+    },
+    options: {
+        responsive: true,
+        needle: { radiusPercentage: 2, widthPercentage: 3.2, lengthPercentage: 80, color: "rgba(30,32,48,0.85)" },
+        valueLabel: {
+            display: true,
+            formatter: (v) => typeof v === 'number' ? `${v} °C` : '',
+            color: "#ffffff",
+            borderRadius: 6,
+            padding: { top: 5, right: 10, bottom: 5, left: 10 },
+        },
+        animation: { duration: 800, easing: "easeInOutQuart" },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    },
+});
+
+// ── ④ 360° gauge ─────────────────────────────────────────────────────────────
+
+makeGauge(
+    "g-360", 270,
+    [90, 180, 270, 360],
+    ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2"],
+    {
+        chart: { rotation: -180, circumference: 360, cutout: "70%" },
+        valueLabel: { formatter: (v) => typeof v === 'number' ? `${v}°` : '' },
+    }
+);
+
+// ── ⑤ Hidden label, thin needle ──────────────────────────────────────────────
+
+makeGauge(
+    "g-nolabel", 48,
+    [33, 66, 100],
+    ["#667eea", "#764ba2", "#f093fb"],
+    {
+        needle: { widthPercentage: 1.5, lengthPercentage: 90, color: "#fff" },
+        valueLabel: { display: false },
+    }
+);
+
+// ── ⑥ Thin ring (cutout 80%) ─────────────────────────────────────────────────
+
+makeGauge(
+    "g-thin", 81,
+    [40, 80, 100],
+    ["#fc5c7d", "#6a3093", "#56ab2f"],
+    {
+        chart: { cutout: "80%" },
+        needle: { lengthPercentage: 95, widthPercentage: 2, radiusPercentage: 1.5 },
+        valueLabel: { formatter: (v) => typeof v === 'number' ? `${v} / 100` : '', fontSize: 11 },
+    }
+);
+
+// ── ⑦ KPI comparison ─────────────────────────────────────────────────────────
+
+const kpiColors = ["#E15759", "#F28E2B", "#59A14F"];
+const kpiData   = [33, 66, 100];
+const kpiOpts   = { valueLabel: { formatter: (v) => typeof v === 'number' ? `${v}%` : '', fontSize: 11 } };
+
+makeGauge("g-kpi1", 87, kpiData, kpiColors, kpiOpts);
+makeGauge("g-kpi2", 34, kpiData, kpiColors, kpiOpts);
+makeGauge("g-kpi3", 61, kpiData, kpiColors, kpiOpts);
+</script>
+</body>
+</html>
