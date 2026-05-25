@@ -261,7 +261,7 @@
     }
 
     GaugeController.id = "gauge";
-    GaugeController.version = "1.0.0";
+    GaugeController.version = "1.1.0";
 
     GaugeController.overrides = {
         needle: {
