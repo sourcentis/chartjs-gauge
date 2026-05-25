@@ -59,6 +59,17 @@ export class GaugeController extends DoughnutController {
         const chart = this.chart;
         const { chartArea } = chart;
         const meta = this._cachedMeta;
+
+        if (mode !== 'none') {
+            const minVal = meta.minValue != null ? meta.minValue : 0;
+            this._needleFrom = mode === 'reset'
+                ? minVal
+                : (this._needleCurrent != null ? this._needleCurrent : minVal);
+            this._needleTo = meta.value;
+            this._needleAnimStart = Date.now();
+            this._startNeedleRaf();
+        }
+
         const arcs = meta.data;
         const spacing = this.getMaxBorderWidth() + this.getMaxOffset(arcs);
         const maxSize = Math.max((Math.min(chartArea.width, chartArea.height) - spacing) / 2, 0);
@@ -87,6 +98,28 @@ export class GaugeController extends DoughnutController {
         this.innerRadius = Math.max(this.outerRadius - radiusLength * chartWeight, 0);
 
         this.updateElements(arcs, 0, arcs.length, mode);
+    }
+
+    _startNeedleRaf() {
+        const animOpts = this.chart.options.animation;
+        const duration = animOpts && animOpts.duration != null ? animOpts.duration : 1000;
+        if (duration <= 0) return;
+
+        if (this._needleRafId) {
+            cancelAnimationFrame(this._needleRafId);
+        }
+
+        const tick = () => {
+            const elapsed = Date.now() - this._needleAnimStart;
+            if (elapsed < duration) {
+                this.chart.draw();
+                this._needleRafId = requestAnimationFrame(tick);
+            } else {
+                this._needleRafId = null;
+                this.chart.draw();
+            }
+        };
+        this._needleRafId = requestAnimationFrame(tick);
     }
 
     calculateTotal() {
@@ -184,7 +217,23 @@ export class GaugeController extends DoughnutController {
         const meta = this._cachedMeta;
         const circumference = this._getCircumference();
         const rotation = this._getRotation();
-        const angle = this.calculateCircumference((meta.value * circumference) / TAU) + rotation;
+
+        let animatedValue = meta.value;
+        const animOpts = this.chart.options.animation;
+        const duration = animOpts && animOpts.duration != null ? animOpts.duration : 1000;
+        if (duration > 0 && this._needleAnimStart != null && this._needleTo != null) {
+            const elapsed = Date.now() - this._needleAnimStart;
+            if (elapsed < duration) {
+                const t = elapsed / duration;
+                const progress = t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+                animatedValue = this._needleFrom + (this._needleTo - this._needleFrom) * progress;
+            } else {
+                animatedValue = this._needleTo;
+            }
+        }
+        this._needleCurrent = animatedValue;
+
+        const angle = this.calculateCircumference((animatedValue * circumference) / TAU) + rotation;
 
         ctx.save();
         ctx.translate(dx, dy);

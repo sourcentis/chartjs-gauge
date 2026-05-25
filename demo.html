@@ -192,6 +192,7 @@
         <span class="badge">UMD · ESM</span>
         <span class="badge">Laravel / npm</span>
     </div>
+
 </header>
 
 <main>
@@ -347,6 +348,8 @@
 <script>
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+const ANIM_DURATION = 1400;
+
 function makeGauge(id, value, data, colors, options = {}) {
     return new Chart(document.getElementById(id), {
         type: "gauge",
@@ -367,7 +370,7 @@ function makeGauge(id, value, data, colors, options = {}) {
                 padding: { top: 5, right: 10, bottom: 5, left: 10 },
                 ...options.valueLabel,
             },
-            animation: { duration: 800, easing: "easeInOutQuart" },
+            animation: { duration: ANIM_DURATION, easing: "easeInOutQuart" },
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             ...options.chart,
         },
@@ -430,11 +433,10 @@ new Chart(document.getElementById("g-temp"), {
             borderRadius: 6,
             padding: { top: 5, right: 10, bottom: 5, left: 10 },
         },
-        animation: { duration: 800, easing: "easeInOutQuart" },
+        animation: { duration: ANIM_DURATION, easing: "easeInOutQuart" },
         plugins: { legend: { display: false }, tooltip: { enabled: false } },
     },
 });
-
 // ── ④ 360° gauge ─────────────────────────────────────────────────────────────
 
 makeGauge(
@@ -481,6 +483,7 @@ const kpiOpts   = { valueLabel: { formatter: (v) => typeof v === 'number' ? `${v
 makeGauge("g-kpi1", 87, kpiData, kpiColors, kpiOpts);
 makeGauge("g-kpi2", 34, kpiData, kpiColors, kpiOpts);
 makeGauge("g-kpi3", 61, kpiData, kpiColors, kpiOpts);
+
 </script>
 </body>
 </html>
