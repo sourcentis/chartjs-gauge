@@ -1,0 +1,35 @@
+{
+    "name": "sourcentis/chartjs-gauge",
+    "description": "A Chart.js plugin providing a gauge chart type with needle and value label",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["chart.js", "gauge", "chart", "javascript", "laravel"],
+    "homepage": "https://github.com/sourcentis/chartjs-gauge",
+    "authors": [
+        {
+            "name": "Sourcentis",
+            "email": "contact@sourcentis.fr",
+            "homepage": "https://github.com/sourcentis"
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0 || ^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sourcentis\\ChartjsGauge\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Sourcentis\\ChartjsGauge\\ChartjsGaugeServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
