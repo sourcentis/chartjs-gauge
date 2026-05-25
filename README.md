@@ -6,6 +6,8 @@ A [Chart.js](https://www.chartjs.org/) plugin that adds a **gauge chart** type â
 [![Packagist version](https://img.shields.io/packagist/v/sourcentis/chartjs-gauge)](https://packagist.org/packages/sourcentis/chartjs-gauge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+![chartjs-gauge](images/gauge1.png):
+
 ---
 
 ## Features
