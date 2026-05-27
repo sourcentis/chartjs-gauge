@@ -37,7 +37,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/sourcentis/chartjs-gauge.git"
+        "url": "git+https://github.com/sourcentis/chartjs-gauge.git"
     },
     "bugs": {
         "url": "https://github.com/sourcentis/chartjs-gauge/issues"

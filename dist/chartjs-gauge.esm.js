@@ -70,11 +70,15 @@ class GaugeController extends DoughnutController {
         const chartWeight = this._getRingWeight(this.index);
 
         const { circumference, rotation } = this._getRotationExtents();
+        const _dsNeedle = this.getDataset().needle;
+        const effectiveNeedle = _dsNeedle
+            ? { ...this.options.needle, ..._dsNeedle }
+            : this.options.needle;
         const { ratioX, ratioY, offsetX, offsetY } = getRatioAndOffset(
             rotation,
             circumference,
             cutout,
-            this.options.needle
+            effectiveNeedle
         );
         const maxWidth = (chartArea.width - spacing) / ratioX;
         const maxHeight = (chartArea.height - spacing) / ratioY;
@@ -199,7 +203,12 @@ class GaugeController extends DoughnutController {
     drawNeedle() {
         const { ctx, chartArea } = this.chart;
         const { innerRadius, outerRadius } = this;
-        const { radiusPercentage, widthPercentage, lengthPercentage, color } = this.options.needle;
+        // Per-dataset needle config merges on top of chart-level options.needle
+        const _dsNeedle = this.getDataset().needle;
+        const needle = _dsNeedle
+            ? { ...this.options.needle, ..._dsNeedle }
+            : this.options.needle;
+        const { radiusPercentage, widthPercentage, lengthPercentage, color } = needle;
 
         const width = chartArea.right - chartArea.left;
         const needleRadius = (radiusPercentage / 100) * width;
@@ -247,6 +256,10 @@ class GaugeController extends DoughnutController {
     }
 
     drawValueLabel() {
+        // Per-dataset override: dataset.valueLabel.display = false hides the label for this ring
+        const dsValueLabel = this.getDataset().valueLabel;
+        if (dsValueLabel && dsValueLabel.display === false) return;
+
         const valueLabelOpts = this.options.valueLabel;
         if (!valueLabelOpts.display) return;
 
