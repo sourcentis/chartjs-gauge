@@ -1,6 +1,6 @@
 {
     "name": "@sourcentis/chartjs-gauge",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "A Chart.js plugin providing a gauge chart type with needle and value label",
     "main": "dist/chartjs-gauge.umd.js",
     "module": "dist/chartjs-gauge.esm.js",
