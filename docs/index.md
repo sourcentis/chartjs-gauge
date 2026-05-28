@@ -1,4 +1,4 @@
-# ![chartjs-gauge logo](images/logo.svg) [chartjs-gauge](www.ogooglec.com)
+# ![chartjs-gauge logo](images/logo.svg) [chartjs-gauge](https://github.com/sourcentis/chartjs-gauge)
 
 A [Chart.js](https://www.chartjs.org/) plugin that adds a **gauge chart** type — a half-doughnut with an animated needle and a configurable value label.
 
